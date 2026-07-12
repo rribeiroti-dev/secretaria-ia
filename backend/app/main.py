@@ -37,6 +37,11 @@ app = FastAPI(
     redoc_url=None,
 )
 
+@app.get("/")
+@app.head("/")
+def health_check():
+    return {"status": "healthy"}
+
 # --- Rate limiting global ---
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
