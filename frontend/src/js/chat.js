@@ -42,39 +42,49 @@ function addBubble(text, role) {
 function addAgentAnswer(answer, usedMemories, grounded) {
   hideEmptyState();
 
-  // Container principal para alinhar o balão e os extras
+  // 1. Deteta se a IA respondeu negativamente (não encontrou a informação)
+  const isNotFound = answer.toLowerCase().includes("não encontrei") || answer.toLowerCase().includes("não consegui");
+
+  // Container principal
   const wrapper = document.createElement("div");
   wrapper.style.display = "flex";
   wrapper.style.flexDirection = "column";
   wrapper.style.alignItems = "flex-start";
 
   const bubble = document.createElement("div");
-  bubble.className = `bubble bubble-agent${grounded ? "" : " not-grounded"}`;
-  bubble.style.position = "relative"; // Permite posicionar o botão 'i'
+  // Se for uma resposta negativa, tira o estilo de "grounded" (ancorado)
+  bubble.className = `bubble bubble-agent${grounded && !isNotFound ? "" : " not-grounded"}`;
+  bubble.style.position = "relative";
   bubble.textContent = answer;
 
   wrapper.appendChild(bubble);
 
-  if (grounded && usedMemories?.length) {
+  // 2. Só mostra o botão "i" se houver memórias E se a IA encontrou a resposta
+  if (grounded && usedMemories?.length > 0 && !isNotFound) {
     const sourcesEl = document.createElement("div");
     sourcesEl.className = "bubble-sources";
-    sourcesEl.style.display = "none"; // Começa escondido!
+    sourcesEl.style.display = "none"; // Começa escondido
     sourcesEl.style.marginTop = "8px";
 
-    usedMemories.forEach((mem) => {
-      const chip = document.createElement("span");
-      chip.className = "source-chip";
-      chip.textContent = `${SOURCE_LABELS[mem.source_type] || mem.source_type} · ${new Date(mem.created_at).toLocaleDateString("pt-BR")}`;
-      sourcesEl.appendChild(chip);
-    });
+    // 3. Pega APENAS a memória mais relevante (a primeira da lista)
+    const mainMemory = usedMemories[0];
 
-    // Cria o botão subtil de informação
+    const chip = document.createElement("span");
+    chip.className = "source-chip";
+
+    // Converte a data e adiciona a hora exata
+    const dateTime = new Date(mainMemory.created_at).toLocaleString("pt-BR");
+    const sourceType = SOURCE_LABELS[mainMemory.source_type] || mainMemory.source_type;
+
+    chip.textContent = `${sourceType} · Inserido em: ${dateTime}`;
+    sourcesEl.appendChild(chip);
+
+    // Cria o botão subtil
     const infoBtn = document.createElement("button");
     infoBtn.className = "info-btn-subtle";
     infoBtn.innerHTML = "i";
-    infoBtn.title = "Ver fontes desta resposta";
+    infoBtn.title = "Ver detalhes do registo";
 
-    // Evento para mostrar/esconder
     infoBtn.onclick = () => {
       sourcesEl.style.display = sourcesEl.style.display === "none" ? "flex" : "none";
       scrollToBottom();

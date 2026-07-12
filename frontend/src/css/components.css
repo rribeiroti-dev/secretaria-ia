@@ -444,23 +444,34 @@
   color: white;
 }
 
-/* --- CORREÇÃO DE CONTRASTE PARA MOBILE --- */
-/* Força a cor do texto do histórico para ser sempre legível */
+/* --- CORES ADAPTÁVEIS PARA O HISTÓRICO E CHAT --- */
 .history-text {
-  color: var(--color-ink, #1e293b) !important;
-  font-weight: 500;
+  color: var(--color-ink, #1e293b);
 }
 
 .history-meta {
-  color: var(--color-ink-soft, #475569) !important;
+  color: var(--color-ink-soft, #475569);
 }
 
-/* Garante que o input de texto do chat não desapareça no modo dark/mobile */
-#composer-input {
-  color: var(--color-ink, #000) !important;
-  background-color: transparent !important;
-}
+/* Quando o telemóvel ou navegador estiver no Modo Escuro */
+@media (prefers-color-scheme: dark) {
+  .history-text {
+    color: #f8fafc !important;
+    /* Branco fosco brilhante */
+  }
 
-.composer {
-  background-color: var(--color-surface, #fff) !important;
+  .history-meta {
+    color: #94a3b8 !important;
+    /* Cinza claro elegante */
+  }
+
+  #composer-input {
+    color: #f8fafc !important;
+    /* Texto do chat branco */
+  }
+
+  .composer {
+    background-color: #0f172a !important;
+    /* Fundo do chat escuro */
+  }
 }
