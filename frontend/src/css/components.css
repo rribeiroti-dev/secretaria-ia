@@ -453,25 +453,19 @@
   color: var(--color-ink-soft, #475569);
 }
 
-/* Quando o telemóvel ou navegador estiver no Modo Escuro */
-@media (prefers-color-scheme: dark) {
-  .history-text {
-    color: #f8fafc !important;
-    /* Branco fosco brilhante */
-  }
+/* --- CORES UNIFORMES PARA O HISTÓRICO (Sempre legível contra o fundo escuro) --- */
+.history-text {
+  color: #f8fafc !important;
+  /* Branco fosco brilhante */
+  font-weight: 500;
+}
 
-  .history-meta {
-    color: #94a3b8 !important;
-    /* Cinza claro elegante */
-  }
+.history-meta {
+  color: #94a3b8 !important;
+  /* Cinza claro elegante */
+}
 
-  #composer-input {
-    color: #f8fafc !important;
-    /* Texto do chat branco */
-  }
-
-  .composer {
-    background-color: #0f172a !important;
-    /* Fundo do chat escuro */
-  }
+/* Mantém o input de texto visível caso o sistema do utilizador force alterações */
+#composer-input {
+  color: var(--color-ink, #000);
 }
