@@ -41,23 +41,50 @@ function addBubble(text, role) {
 
 function addAgentAnswer(answer, usedMemories, grounded) {
   hideEmptyState();
+
+  // Container principal para alinhar o balão e os extras
+  const wrapper = document.createElement("div");
+  wrapper.style.display = "flex";
+  wrapper.style.flexDirection = "column";
+  wrapper.style.alignItems = "flex-start";
+
   const bubble = document.createElement("div");
   bubble.className = `bubble bubble-agent${grounded ? "" : " not-grounded"}`;
+  bubble.style.position = "relative"; // Permite posicionar o botão 'i'
   bubble.textContent = answer;
+
+  wrapper.appendChild(bubble);
 
   if (grounded && usedMemories?.length) {
     const sourcesEl = document.createElement("div");
     sourcesEl.className = "bubble-sources";
+    sourcesEl.style.display = "none"; // Começa escondido!
+    sourcesEl.style.marginTop = "8px";
+
     usedMemories.forEach((mem) => {
       const chip = document.createElement("span");
       chip.className = "source-chip";
       chip.textContent = `${SOURCE_LABELS[mem.source_type] || mem.source_type} · ${new Date(mem.created_at).toLocaleDateString("pt-BR")}`;
       sourcesEl.appendChild(chip);
     });
-    bubble.appendChild(sourcesEl);
+
+    // Cria o botão subtil de informação
+    const infoBtn = document.createElement("button");
+    infoBtn.className = "info-btn-subtle";
+    infoBtn.innerHTML = "i";
+    infoBtn.title = "Ver fontes desta resposta";
+
+    // Evento para mostrar/esconder
+    infoBtn.onclick = () => {
+      sourcesEl.style.display = sourcesEl.style.display === "none" ? "flex" : "none";
+      scrollToBottom();
+    };
+
+    bubble.appendChild(infoBtn);
+    wrapper.appendChild(sourcesEl);
   }
 
-  chatScroll.appendChild(bubble);
+  chatScroll.appendChild(wrapper);
   scrollToBottom();
 }
 

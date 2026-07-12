@@ -417,3 +417,50 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* --- ESTILO DO BOTÃO 'i' SUBTIL --- */
+.info-btn-subtle {
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--color-surface, #e2e8f0);
+  border: 1px solid var(--color-border, #cbd5e1);
+  color: var(--color-ink-soft, #64748b);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.info-btn-subtle:hover {
+  background-color: var(--color-primary, #0f172a);
+  color: white;
+}
+
+/* --- CORREÇÃO DE CONTRASTE PARA MOBILE --- */
+/* Força a cor do texto do histórico para ser sempre legível */
+.history-text {
+  color: var(--color-ink, #1e293b) !important;
+  font-weight: 500;
+}
+
+.history-meta {
+  color: var(--color-ink-soft, #475569) !important;
+}
+
+/* Garante que o input de texto do chat não desapareça no modo dark/mobile */
+#composer-input {
+  color: var(--color-ink, #000) !important;
+  background-color: transparent !important;
+}
+
+.composer {
+  background-color: var(--color-surface, #fff) !important;
+}
