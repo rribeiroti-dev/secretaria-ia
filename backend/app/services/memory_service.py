@@ -8,7 +8,16 @@ o próprio usuário já inseriu. Isso é garantido em duas camadas:
      mensagem padrão de "não há esse registro", sem chance de alucinação.
   2. Camada de geração: quando há memórias relevantes, o LLM recebe um
      system prompt que o instrui a responder apenas com base nesse contexto.
+
+Nota de performance/estabilidade: `embed_text` (carrega/roda o modelo ONNX)
+e as chamadas ao `MemoryRepository` (cliente supabase-py, que é síncrono/
+bloqueante) NUNCA são chamadas diretamente dentro de uma rota async — isso
+travaria o único event loop do servidor, inclusive o healthcheck do Render.
+Por isso, toda operação potencialmente bloqueante passa por
+`run_in_threadpool`, que a executa em uma thread separada.
 """
+from starlette.concurrency import run_in_threadpool
+
 from app.models.memory_schemas import MemoryItem, SourceType
 from app.repositories.memory_repository import MemoryRepository
 from app.services import llm_service
@@ -43,17 +52,20 @@ class MemoryService:
     def __init__(self):
         self._repository = MemoryRepository()
 
-    def ingest_text(self, user_id: str, content: str) -> MemoryItem:
-        return self._ingest(user_id, SourceType.TEXT, content, original_filename=None)
+    async def ingest_text(self, user_id: str, content: str) -> MemoryItem:
+        return await self._ingest(user_id, SourceType.TEXT, content, original_filename=None)
 
-    def ingest_extracted_content(
+    async def ingest_extracted_content(
         self, user_id: str, source_type: SourceType, extracted_text: str, filename: str | None
     ) -> MemoryItem:
-        return self._ingest(user_id, source_type, extracted_text, original_filename=filename)
+        return await self._ingest(user_id, source_type, extracted_text, original_filename=filename)
 
-    def _ingest(self, user_id: str, source_type: SourceType, text: str, original_filename: str | None) -> MemoryItem:
-        embedding = embed_text(text)
-        record = self._repository.create(
+    async def _ingest(
+        self, user_id: str, source_type: SourceType, text: str, original_filename: str | None
+    ) -> MemoryItem:
+        embedding = await run_in_threadpool(embed_text, text)
+        record = await run_in_threadpool(
+            self._repository.create,
             user_id=user_id,
             source_type=source_type.value,
             extracted_text=text,
@@ -63,8 +75,8 @@ class MemoryService:
         return _to_memory_item(record)
 
     async def answer_question(self, user_id: str, question: str) -> tuple[str, list[MemoryItem], bool]:
-        query_embedding = embed_text(question)
-        raw_results = self._repository.search_similar(user_id, query_embedding, top_k=6)
+        query_embedding = await run_in_threadpool(embed_text, question)
+        raw_results = await run_in_threadpool(self._repository.search_similar, user_id, query_embedding, top_k=6)
 
         relevant = [r for r in raw_results if r.get("similarity", 0) >= _MIN_SIMILARITY]
 
@@ -80,8 +92,8 @@ class MemoryService:
         used_memories = [_to_memory_item(r) for r in relevant]
         return answer, used_memories, True
 
-    def list_history(self, user_id: str, limit: int, offset: int) -> tuple[list[MemoryItem], int]:
-        records, total = self._repository.list_all(user_id, limit=limit, offset=offset)
+    async def list_history(self, user_id: str, limit: int, offset: int) -> tuple[list[MemoryItem], int]:
+        records, total = await run_in_threadpool(self._repository.list_all, user_id, limit=limit, offset=offset)
         return [_to_memory_item(r) for r in records], total
 
 

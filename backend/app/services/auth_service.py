@@ -6,9 +6,15 @@ Fluxo de login em duas etapas, obrigatório para toda conta:
    `pending_2fa_token` de curtíssima duração (5 min). Não concede acesso.
 2. POST /auth/verify-2fa -> valida o código TOTP contra esse token pendente.
    Só então são emitidos o access_token e o refresh_token reais.
+
+Nota de performance/estabilidade: o `UserRepository` usa supabase-py, um
+cliente HTTP síncrono/bloqueante. Toda chamada a ele passa por
+`run_in_threadpool` para não travar o event loop único do servidor
+(o mesmo cuidado aplicado em memory_service.py).
 """
 import jwt
 from fastapi import HTTPException, status
+from starlette.concurrency import run_in_threadpool
 
 from app.core.crypto import decrypt_secret, encrypt_secret
 from app.core.security import (
@@ -38,17 +44,19 @@ class AuthService:
     def __init__(self):
         self._users = UserRepository()
 
-    def register(self, data: RegisterRequest) -> RegisterResponse:
-        if self._users.get_by_email(data.email):
+    async def register(self, data: RegisterRequest) -> RegisterResponse:
+        existing = await run_in_threadpool(self._users.get_by_email, data.email)
+        if existing:
             # Mensagem genérica: não revela se o e-mail já existe em detalhe,
             # mas aqui optamos por clareza de UX; ajuste conforme política de privacidade.
             raise HTTPException(status.HTTP_409_CONFLICT, "Não foi possível concluir o cadastro com esses dados.")
 
-        password_hash = hash_password(data.password)
+        password_hash = await run_in_threadpool(hash_password, data.password)
         totp_secret = generate_totp_secret()
         encrypted_secret = encrypt_secret(totp_secret)
 
-        self._users.create(
+        await run_in_threadpool(
+            self._users.create,
             email=data.email,
             full_name=data.full_name,
             password_hash=password_hash,
@@ -62,8 +70,8 @@ class AuthService:
             totp_secret=totp_secret,
         )
 
-    def login(self, data: LoginRequest) -> LoginResponse:
-        user = self._users.get_by_email(data.email)
+    async def login(self, data: LoginRequest) -> LoginResponse:
+        user = await run_in_threadpool(self._users.get_by_email, data.email)
         generic_error = HTTPException(status.HTTP_401_UNAUTHORIZED, "E-mail ou senha inválidos.")
 
         if not user:
@@ -77,11 +85,14 @@ class AuthService:
                 "Conta temporariamente bloqueada por excesso de tentativas. Contate o suporte.",
             )
 
-        if not verify_password(data.password, user["password_hash"]):
-            self._users.register_failed_login(user["id"], user.get("failed_login_attempts", 0) + 1)
+        password_ok = await run_in_threadpool(verify_password, data.password, user["password_hash"])
+        if not password_ok:
+            await run_in_threadpool(
+                self._users.register_failed_login, user["id"], user.get("failed_login_attempts", 0) + 1
+            )
             raise generic_error
 
-        self._users.reset_failed_login(user["id"])
+        await run_in_threadpool(self._users.reset_failed_login, user["id"])
 
         pending_token = generate_temp_2fa_token(user_id=user["id"])
         return LoginResponse(
@@ -89,7 +100,7 @@ class AuthService:
             pending_2fa_token=pending_token,
         )
 
-    def verify_2fa(self, data: Verify2FARequest) -> TokenResponse:
+    async def verify_2fa(self, data: Verify2FARequest) -> TokenResponse:
         invalid = HTTPException(status.HTTP_401_UNAUTHORIZED, "Código de verificação inválido ou expirado.")
         try:
             payload = decode_token(data.pending_2fa_token)
@@ -100,7 +111,7 @@ class AuthService:
             raise invalid
 
         user_id = payload["sub"]
-        user = self._users.get_by_id(user_id)
+        user = await run_in_threadpool(self._users.get_by_id, user_id)
         if not user:
             raise invalid
 
@@ -109,13 +120,13 @@ class AuthService:
             raise invalid
 
         if not user.get("totp_confirmed"):
-            self._users.confirm_totp(user_id)
+            await run_in_threadpool(self._users.confirm_totp, user_id)
 
         access_token = create_token(subject=user_id, token_type="access")
         refresh_token = create_token(subject=user_id, token_type="refresh")
         return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
-    def refresh(self, refresh_token: str) -> TokenResponse:
+    async def refresh(self, refresh_token: str) -> TokenResponse:
         invalid = HTTPException(status.HTTP_401_UNAUTHORIZED, "Sessão expirada. Faça login novamente.")
         try:
             payload = decode_token(refresh_token)

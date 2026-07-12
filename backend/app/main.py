@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from starlette.concurrency import run_in_threadpool
 
 from app.core.config import get_settings
 from app.middleware.rate_limit import limiter
@@ -85,6 +86,29 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 app.include_router(auth_routes.router)
 app.include_router(memory_routes.router)
 app.include_router(chat_routes.router)
+
+
+@app.on_event("startup")
+async def _warm_up_embedding_model() -> None:
+    """
+    Pré-carrega o modelo de embedding em segundo plano assim que o servidor
+    sobe, para que o primeiro usuário não pague o custo do download/carga do
+    modelo. Roda em threadpool e nunca bloqueia a inicialização do servidor
+    nem o healthcheck — se falhar, apenas loga um aviso (o modelo será
+    carregado normalmente, sob demanda, na primeira requisição real).
+    """
+    import asyncio
+
+    async def _warm_up():
+        try:
+            from app.services.embedding_service import embed_text
+
+            await run_in_threadpool(embed_text, "aquecimento do modelo de embedding")
+            logger.info("Modelo de embedding pré-carregado com sucesso.")
+        except Exception as exc:  # noqa: BLE001 — best-effort, nunca deve derrubar o startup
+            logger.warning("Falha ao pré-carregar o modelo de embedding (será carregado sob demanda): %s", exc)
+
+    asyncio.create_task(_warm_up())
 
 
 @app.get("/health", tags=["infra"])

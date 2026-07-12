@@ -25,7 +25,7 @@ def _service() -> MemoryService:
 @limiter.limit(settings.rate_limit_media)
 async def add_text_memory(request: Request, payload: TextMemoryRequest, user: CurrentUser = Depends(get_current_user)):
     """Registra uma informação em texto na memória do usuário autenticado."""
-    memory = _service().ingest_text(user.user_id, payload.content)
+    memory = await _service().ingest_text(user.user_id, payload.content)
     return MemoryIngestResponse(message="Informação registrada na sua memória.", memory=memory)
 
 
@@ -34,7 +34,7 @@ async def add_text_memory(request: Request, payload: TextMemoryRequest, user: Cu
 async def add_audio_memory(request: Request, file: UploadFile, user: CurrentUser = Depends(get_current_user)):
     """Transcreve um áudio (gravado ou anexado) e registra o texto resultante na memória."""
     extracted_text = await media_ingestion_service.process_audio(file)
-    memory = _service().ingest_extracted_content(user.user_id, SourceType.AUDIO, extracted_text, file.filename)
+    memory = await _service().ingest_extracted_content(user.user_id, SourceType.AUDIO, extracted_text, file.filename)
     return MemoryIngestResponse(message="Áudio transcrito e registrado na sua memória.", memory=memory)
 
 
@@ -43,7 +43,7 @@ async def add_audio_memory(request: Request, file: UploadFile, user: CurrentUser
 async def add_image_memory(request: Request, file: UploadFile, user: CurrentUser = Depends(get_current_user)):
     """Descreve uma foto (capturada ou anexada) e registra a descrição na memória."""
     extracted_text = await media_ingestion_service.process_image(file)
-    memory = _service().ingest_extracted_content(user.user_id, SourceType.IMAGE, extracted_text, file.filename)
+    memory = await _service().ingest_extracted_content(user.user_id, SourceType.IMAGE, extracted_text, file.filename)
     return MemoryIngestResponse(message="Foto analisada e registrada na sua memória.", memory=memory)
 
 
@@ -52,7 +52,7 @@ async def add_image_memory(request: Request, file: UploadFile, user: CurrentUser
 async def add_video_memory(request: Request, file: UploadFile, user: CurrentUser = Depends(get_current_user)):
     """Processa um vídeo (capturado ou anexado): extrai cena e fala, e registra na memória."""
     extracted_text = await media_ingestion_service.process_video(file)
-    memory = _service().ingest_extracted_content(user.user_id, SourceType.VIDEO, extracted_text, file.filename)
+    memory = await _service().ingest_extracted_content(user.user_id, SourceType.VIDEO, extracted_text, file.filename)
     return MemoryIngestResponse(message="Vídeo processado e registrado na sua memória.", memory=memory)
 
 
@@ -63,5 +63,5 @@ async def get_history(
     offset: int = Query(default=0, ge=0),
 ):
     """Lista o histórico de memórias já registradas pelo usuário autenticado, paginado."""
-    items, total = _service().list_history(user.user_id, limit=limit, offset=offset)
+    items, total = await _service().list_history(user.user_id, limit=limit, offset=offset)
     return HistoryResponse(items=items, total=total)

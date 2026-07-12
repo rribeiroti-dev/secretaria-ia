@@ -19,7 +19,7 @@ supabase==2.11.0
 # HTTP / integração com provedores de IA
 httpx==0.28.1
 
-# Embeddings locais (memória vetorial)
+# Embeddings locais (memória vetorial) — ONNX Runtime, sem PyTorch (leve o suficiente para o free tier do Render)
 fastembed==0.8.0
 
 # Upload multipart
