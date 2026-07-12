@@ -21,17 +21,18 @@ const _tokenStore = {
 };
 
 export function setTokens({ access_token, refresh_token }) {
-  _tokenStore.accessToken = access_token;
-  _tokenStore.refreshToken = refresh_token;
+  // Salva no armazenamento temporário da aba
+  sessionStorage.setItem("access_token", access_token);
+  sessionStorage.setItem("refresh_token", refresh_token);
 }
 
 export function clearTokens() {
-  _tokenStore.accessToken = null;
-  _tokenStore.refreshToken = null;
+  sessionStorage.removeItem("access_token");
+  sessionStorage.removeItem("refresh_token");
 }
 
 export function isAuthenticated() {
-  return Boolean(_tokenStore.accessToken);
+  return Boolean(sessionStorage.getItem("access_token"));
 }
 
 class ApiError extends Error {
@@ -44,8 +45,15 @@ class ApiError extends Error {
 
 async function _request(path, { method = "GET", body, isFormData = false, auth = true, retry = true } = {}) {
   const headers = {};
+
+  // Lendo os tokens do Session Storage
+  const currentAccessToken = sessionStorage.getItem("access_token");
+  const currentRefreshToken = sessionStorage.getItem("refresh_token");
+
   if (!isFormData) headers["Content-Type"] = "application/json";
-  if (auth && _tokenStore.accessToken) headers["Authorization"] = `Bearer ${_tokenStore.accessToken}`;
+
+  // Injetando o token atual na requisição
+  if (auth && currentAccessToken) headers["Authorization"] = `Bearer ${currentAccessToken}`;
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
@@ -53,43 +61,29 @@ async function _request(path, { method = "GET", body, isFormData = false, auth =
     body: isFormData ? body : body ? JSON.stringify(body) : undefined,
   });
 
-  if (response.status === 401 && auth && retry && _tokenStore.refreshToken) {
-    const refreshed = await _tryRefresh();
+  // Atualiza o if do refresh para usar a variável nova
+  if (response.status === 401 && auth && retry && currentRefreshToken) {
+    const refreshed = await _tryRefresh(currentRefreshToken);
     if (refreshed) {
       return _request(path, { method, body, isFormData, auth, retry: false });
     }
   }
 
-  let payload = null;
-  try {
-    payload = await response.json();
-  } catch {
-    payload = null;
+  async function _tryRefresh(refreshToken) {
+    try {
+      const result = await _request("/auth/refresh", {
+        method: "POST",
+        body: { refresh_token: refreshToken }, // Usa o token passado por parâmetro
+        auth: false,
+        retry: false,
+      });
+      setTokens(result);
+      return true;
+    } catch {
+      clearTokens();
+      return false;
+    }
   }
-
-  if (!response.ok) {
-    const message = payload?.detail || "Ocorreu um erro inesperado. Tente novamente.";
-    throw new ApiError(message, response.status, payload?.errors);
-  }
-
-  return payload;
-}
-
-async function _tryRefresh() {
-  try {
-    const result = await _request("/auth/refresh", {
-      method: "POST",
-      body: { refresh_token: _tokenStore.refreshToken },
-      auth: false,
-      retry: false,
-    });
-    setTokens(result);
-    return true;
-  } catch {
-    clearTokens();
-    return false;
-  }
-}
 
 export const api = {
   register: (data) => _request("/auth/register", { method: "POST", body: data, auth: false }),
