@@ -1,29 +1,31 @@
-"""
-Geração de embeddings para a memória vetorial (RAG).
+import os
+import requests
+from fastapi import HTTPException
 
-Roda localmente no backend com fastembed (ONNX Runtime — sem depender de
-PyTorch), para caber confortavelmente no limite de RAM do free tier do
-Render (512MB). O modelo escolhido é multilíngue (bom para português) e
-gera vetores de 384 dimensões, compatível com o schema `vector(384)` do
-banco. O modelo é carregado uma única vez (singleton) e reaproveitado
-entre requests.
-"""
-from functools import lru_cache
+# O nome do modelo que você já estava usando
+MODEL_ID = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+API_URL = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{MODEL_ID}"
 
-from fastembed import TextEmbedding
-
-from app.core.config import get_settings
-
-
-@lru_cache
-def _get_model() -> TextEmbedding:
-    settings = get_settings()
-    return TextEmbedding(model_name=settings.embedding_model_name)
-
-
-def embed_text(text: str) -> list[float]:
-    """Gera o vetor de embedding de um texto. Trunca textos muito longos por segurança/custo."""
-    cleaned = text.strip()[:4000]
-    model = _get_model()
-    vector = next(model.embed([cleaned]))
-    return vector.tolist()
+def embed_text(texto: str) -> list[float]:
+    # Pega o token que vamos configurar no Render
+    hf_token = os.getenv("HF_TOKEN")
+    
+    if not hf_token:
+        print("Erro: HF_TOKEN não encontrado nas variáveis de ambiente.")
+        # Para testes locais, você pode forçar o token aqui temporariamente (não suba isso pro GitHub!)
+        # hf_token = "seu_token_aqui" 
+        
+    headers = {"Authorization": f"Bearer {hf_token}"}
+    
+    # Faz a requisição para a API externa gratuita
+    response = requests.post(API_URL, headers=headers, json={"inputs": texto})
+    
+    if response.status_code != 200:
+        print(f"Erro da API HF: {response.text}")
+        raise HTTPException(status_code=500, detail="Erro ao gerar embedding")
+    
+    # A API retorna o vetor matemático. 
+    # Dependendo da API, pode vir aninhado, mas geralmente é uma lista direta.
+    vetor = response.json()
+    
+    return vetor
