@@ -5,7 +5,7 @@ from fastapi import HTTPException
 # Trocamos para o E5-Small (Excelente em Português e nativo para Feature Extraction)
 # Gera 384 dimensões, mantendo total compatibilidade com o seu Supabase
 MODEL_ID = "intfloat/multilingual-e5-small"
-API_URL = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{MODEL_ID}"
+API_URL = f"https://router.huggingface.co/hf-inference/pipeline/feature-extraction/{MODEL_ID}"
 
 def embed_text(texto: str) -> list[float]:
     hf_token = os.getenv("HF_TOKEN")
