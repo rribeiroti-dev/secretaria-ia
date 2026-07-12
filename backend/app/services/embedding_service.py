@@ -2,10 +2,11 @@ import os
 import requests
 from fastapi import HTTPException
 
-# Trocamos para o E5-Small (Excelente em Português e nativo para Feature Extraction)
-# Gera 384 dimensões, mantendo total compatibilidade com o seu Supabase
+# O modelo E5 (perfeito para o seu banco de dados)
 MODEL_ID = "intfloat/multilingual-e5-small"
-API_URL = f"https://router.huggingface.co/hf-inference/pipeline/feature-extraction/{MODEL_ID}"
+
+# A URL EXATA do novo router (agora com a ordem correta: primeiro /models/, depois /pipeline/)
+API_URL = f"https://router.huggingface.co/hf-inference/models/{MODEL_ID}/pipeline/feature-extraction"
 
 def embed_text(texto: str) -> list[float]:
     hf_token = os.getenv("HF_TOKEN")
@@ -29,7 +30,6 @@ def embed_text(texto: str) -> list[float]:
     
     # O Hugging Face costuma devolver o vetor aninhado: [[[0.1, 0.2...]]]
     # O Supabase exige uma lista plana: [0.1, 0.2...]
-    # Este laço 'while' garante que vamos descascar as listas até sobrar só os números
     while isinstance(vetores, list) and len(vetores) > 0 and isinstance(vetores[0], list):
         vetores = vetores[0]
         
