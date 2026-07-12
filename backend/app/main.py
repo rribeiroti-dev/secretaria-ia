@@ -61,9 +61,14 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # exc.errors() pode conter, na chave "ctx", o objeto de exceção Python
+    # original (ex.: ValueError levantado por um @field_validator). Esse
+    # objeto não é serializável em JSON, então removemos "ctx" e mantemos
+    # apenas "msg" (que já traz a mensagem legível para o usuário).
+    sanitized_errors = [{k: v for k, v in error.items() if k != "ctx"} for error in exc.errors()]
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={"detail": "Dados inválidos.", "errors": exc.errors()},
+        content={"detail": "Dados inválidos.", "errors": sanitized_errors},
     )
 
 
