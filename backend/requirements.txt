@@ -20,7 +20,7 @@ supabase==2.11.0
 httpx==0.28.1
 
 # Embeddings locais (memória vetorial)
-sentence-transformers==3.3.1
+fastembed==0.8.0
 
 # Upload multipart
 python-multipart==0.0.20

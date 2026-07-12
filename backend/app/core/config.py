@@ -44,7 +44,9 @@ class Settings(BaseSettings):
     llm_chat_model: str = Field(default="meta-llama/llama-3.1-8b-instruct:free", alias="LLM_CHAT_MODEL")
     llm_vision_model: str = Field(default="meta-llama/llama-3.2-11b-vision-instruct:free", alias="LLM_VISION_MODEL")
     groq_whisper_model: str = Field(default="whisper-large-v3", alias="GROQ_WHISPER_MODEL")
-    embedding_model_name: str = Field(default="all-MiniLM-L6-v2", alias="EMBEDDING_MODEL_NAME")
+    embedding_model_name: str = Field(
+        default="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2", alias="EMBEDDING_MODEL_NAME"
+    )
 
     # --- Upload / limites (proteção contra abuso do free tier) ---
     max_upload_size_mb: int = Field(default=15, alias="MAX_UPLOAD_SIZE_MB")
