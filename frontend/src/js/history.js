@@ -80,3 +80,14 @@ chips.forEach((chip) => {
     render();
   });
 });
+
+// Dispara a atualização do histórico sempre que o botão da aba inferior for clicado
+const historyTabButton = document.querySelector('button[data-view="history"]');
+if (historyTabButton) {
+  historyTabButton.addEventListener("click", () => {
+    refreshHistory();
+  });
+}
+
+// Carrega o histórico pela primeira vez se a aba já estiver ativa
+loadHistoryIfNeeded();

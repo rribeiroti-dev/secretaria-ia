@@ -93,13 +93,48 @@ async function sendQuestion(question) {
   }
 }
 
+async function registerTextMemory(text) {
+  hideEmptyState();
+  const savingBubble = addBubble(text, "user");
+  const typing = addTypingIndicator();
+  try {
+    // Esta é a magia: chama a rota correta do seu api.js para GUARDAR texto
+    await api.addTextMemory(text);
+    typing.remove();
+    addAgentAnswer(`Anotado! Acabei de guardar essa informação na sua memória pessoal.`, [], true);
+    showToast("Texto registado com sucesso!", "success");
+  } catch (err) {
+    typing.remove();
+    savingBubble.remove();
+    showToast(err instanceof ApiError ? err.message : "Não foi possível guardar o texto.", "error");
+  }
+}
+
 composerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const value = textInput.value.trim();
   if (!value) return;
   textInput.value = "";
   textInput.style.height = "auto";
-  await sendQuestion(value);
+
+  const textLower = value.toLowerCase();
+
+  // Heurística de intenção: Se usar comandos ou palavras-chave, nós guardamos na base de dados!
+  if (textLower.startsWith("/guardar") ||
+    textLower.startsWith("/gravar") ||
+    textLower.startsWith("lembre-se que") ||
+    textLower.startsWith("anote que")) {
+
+    // Remove a palavra de comando para guardar apenas a informação útil
+    let textToSave = value.replace(/^\/(guardar|gravar)\s*/i, "");
+    textToSave = textToSave.replace(/^(lembre-se que|anote que)\s*/i, "");
+
+    // Chama a nova função que vai efetivamente salvar a memória
+    await registerTextMemory(textToSave);
+  } else {
+    // Caso contrário, trata a frase como uma pergunta/consulta normal
+    await sendQuestion(value);
+  }
 });
 
 textInput.addEventListener("input", () => {

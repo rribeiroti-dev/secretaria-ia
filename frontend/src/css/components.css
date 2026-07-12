@@ -244,6 +244,11 @@
   0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
   30% { transform: translateY(-4px); opacity: 1; }
 }
+/* Garante que quando o menu tiver o atributo hidden, ele suma de verdade, 
+   mesmo que a classe .media-menu use flexbox */
+.media-menu[hidden] {
+  display: none !important;
+}
 
 /* --- Barra de composição / captura de mídia --- */
 .composer {
