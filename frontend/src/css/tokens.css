@@ -1,0 +1,103 @@
+/*
+  Sistema de design — Agente Secretária Particular
+  Conceito: caderno/agenda de secretária, com "carimbo de cera" como
+  elemento de assinatura (usado na marca e ao confirmar que algo foi
+  "arquivado" na memória). Paleta afastada dos clichês de IA
+  (nada de creme+terracota nem dark+neon).
+*/
+
+:root {
+  /* --- Cor --- */
+  --color-paper: #ECE7DC;         /* fundo — papel envelhecido, não creme padrão */
+  --color-surface: #FFFFFF;       /* cartões, campos, superfícies elevadas */
+  --color-ink: #22282E;           /* texto principal — quase-preto azulado */
+  --color-ink-soft: #5B6470;      /* texto secundário */
+  --color-navy: #2B3E4C;          /* cor de marca — cabeçalho, navegação */
+  --color-navy-dark: #1D2C37;
+  --color-seal: #A8752E;          /* "cera do carimbo" — accent primário, ações */
+  --color-seal-dark: #8A5F22;
+  --color-seal-soft: #F1E4CC;     /* fundo suave do accent, badges */
+  --color-success: #3F6C51;
+  --color-success-soft: #E1EDE4;
+  --color-danger: #B3261E;
+  --color-danger-soft: #F7E2E0;
+  --color-border: #D8D0C0;
+
+  /* --- Tipografia --- */
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-body: "Work Sans", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "Courier New", monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+
+  /* --- Layout --- */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-full: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --shadow-sm: 0 1px 3px rgba(34, 40, 46, 0.10);
+  --shadow-md: 0 4px 14px rgba(34, 40, 46, 0.14);
+  --shadow-seal: 0 2px 8px rgba(168, 117, 46, 0.35);
+
+  --transition-fast: 140ms ease;
+  --transition-base: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Área segura para mobile (notch/gestos) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper: #171B1F;
+    --color-surface: #20262C;
+    --color-ink: #ECE7DC;
+    --color-ink-soft: #A7AEB6;
+    --color-navy: #3A5265;
+    --color-navy-dark: #263640;
+    --color-border: #333B42;
+    --color-seal-soft: #3A2F1C;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-seal);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2B3E4C" />
+  <title>Entrar — Secretária Particular IA</title>
+  <meta name="description" content="Acesse sua secretária particular com IA: memória pessoal protegida por senha e verificação em duas etapas." />
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="public/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="public/icons/icon-192.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="src/css/tokens.css" />
+  <link rel="stylesheet" href="src/css/components.css" />
+  <link rel="stylesheet" href="src/css/layout.css" />
+
+  <!-- Geração de QR code 100% local (sem enviar o segredo do 2FA a terceiros) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <script src="config.js"></script>
+
+  <main class="auth-screen">
+    <div class="brand">
+      <div class="brand-seal" aria-hidden="true">S</div>
+      <h1>Secretária Particular IA</h1>
+      <p>Sua assistente pessoal com memória. Só responde com base no que você mesmo já contou a ela.</p>
+    </div>
+
+    <!-- ===================== LOGIN (etapa 1: senha) ===================== -->
+    <section id="screen-login" class="auth-card card active">
+      <h2 style="margin-top:0; font-family: var(--font-display); font-size: var(--text-lg);">Entrar</h2>
+      <form id="form-login" novalidate>
+        <div class="alert alert-error form-error" role="alert" style="display:none; margin-bottom: var(--space-4);"></div>
+
+        <div class="field">
+          <label for="login-email">E-mail</label>
+          <input id="login-email" name="email" type="email" autocomplete="email" required />
+        </div>
+
+        <div class="field">
+          <label for="login-password">Senha</label>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" required />
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+      </form>
+      <p class="auth-switch">
+        Ainda não tem conta? <button type="button" id="go-to-register">Criar conta</button>
+      </p>
+    </section>
+
+    <!-- ===================== CADASTRO ===================== -->
+    <section id="screen-register" class="auth-card card">
+      <h2 style="margin-top:0; font-family: var(--font-display); font-size: var(--text-lg);">Criar conta</h2>
+      <form id="form-register" novalidate>
+        <div class="alert alert-error form-error" role="alert" style="display:none; margin-bottom: var(--space-4);"></div>
+
+        <div class="field">
+          <label for="register-name">Nome completo</label>
+          <input id="register-name" name="full_name" type="text" autocomplete="name" required />
+        </div>
+
+        <div class="field">
+          <label for="register-email">E-mail</label>
+          <input id="register-email" name="email" type="email" autocomplete="email" required />
+        </div>
+
+        <div class="field">
+          <label for="register-password">Senha</label>
+          <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="10" required />
+          <span class="field-hint">Mínimo 10 caracteres, com maiúscula, minúscula, número e símbolo.</span>
+        </div>
+
+        <div class="field">
+          <label for="register-password-confirm">Confirme a senha</label>
+          <input id="register-password-confirm" name="password_confirm" type="password" autocomplete="new-password" required />
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Criar conta</button>
+      </form>
+      <p class="auth-switch">
+        Já tem conta? <button type="button" id="go-to-login">Entrar</button>
+      </p>
+    </section>
+
+    <!-- ===================== CONFIGURAÇÃO DO 2FA (pós-cadastro) ===================== -->
+    <section id="screen-totp-setup" class="auth-card card">
+      <h2 style="margin-top:0; font-family: var(--font-display); font-size: var(--text-lg);">Configure a verificação em duas etapas</h2>
+      <p style="color: var(--color-ink-soft); font-size: var(--text-sm);">
+        Escaneie o QR code abaixo com um aplicativo autenticador (Google Authenticator, Authy, Microsoft Authenticator).
+        Isso é obrigatório: sem ele, você não conseguirá entrar na conta.
+      </p>
+      <div class="qr-box">
+        <div id="totp-qr"></div>
+        <span class="field-hint">Não consegue escanear? Digite manualmente o código:</span>
+        <span class="totp-secret" id="totp-secret-text"></span>
+      </div>
+      <div class="alert alert-success">
+        Guarde este código em local seguro. Se perder o acesso ao aplicativo autenticador, você perderá o acesso à conta.
+      </div>
+      <button type="button" id="totp-setup-continue" class="btn btn-primary btn-block" style="margin-top: var(--space-4);">
+        Já configurei, ir para o login
+      </button>
+    </section>
+
+    <!-- ===================== LOGIN (etapa 2: código 2FA) ===================== -->
+    <section id="screen-2fa" class="auth-card card">
+      <h2 style="margin-top:0; font-family: var(--font-display); font-size: var(--text-lg);">Verificação em duas etapas</h2>
+      <p style="color: var(--color-ink-soft); font-size: var(--text-sm);">
+        Digite o código de 6 dígitos do seu aplicativo autenticador.
+      </p>
+      <form id="form-2fa" novalidate>
+        <div class="alert alert-error form-error" role="alert" style="display:none; margin-bottom: var(--space-4);"></div>
+
+        <div class="field">
+          <label for="totp-code-input">Código de verificação</label>
+          <input
+            id="totp-code-input"
+            name="totp_code"
+            type="text"
+            inputmode="numeric"
+            pattern="\d{6}"
+            maxlength="6"
+            autocomplete="one-time-code"
+            required
+            style="letter-spacing: 6px; text-align: center; font-family: var(--font-mono); font-size: var(--text-xl);"
+          />
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Confirmar e entrar</button>
+      </form>
+      <p class="auth-switch">
+        <button type="button" id="back-to-login-from-2fa">Voltar</button>
+      </p>
+    </section>
+  </main>
+
+  <script type="module" src="src/js/auth.js"></script>
+</body>
+</html>

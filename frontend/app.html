@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2B3E4C" />
+  <title>Secretária Particular IA</title>
+  <meta name="description" content="Registre texto, áudio, fotos e vídeos e consulte depois — sua secretária particular com memória." />
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="public/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="public/icons/icon-192.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="src/css/tokens.css" />
+  <link rel="stylesheet" href="src/css/components.css" />
+  <link rel="stylesheet" href="src/css/layout.css" />
+</head>
+<body>
+  <script src="config.js"></script>
+
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand-inline">
+        <div class="seal-badge" aria-hidden="true">S</div>
+        <h1>Secretária Particular</h1>
+      </div>
+      <button type="button" id="logout-button">Sair</button>
+    </header>
+
+    <!-- ===================== ABA: CHAT ===================== -->
+    <section id="view-chat" class="view active">
+      <div id="chat-scroll" class="chat-scroll">
+        <div id="chat-empty-state" class="empty-state">
+          <div class="seal-badge" aria-hidden="true">S</div>
+          <p><strong>Ainda não há nada por aqui.</strong></p>
+          <p>Toque no clipe abaixo para registrar um texto, áudio, foto ou vídeo. Depois, pergunte à sua secretária sobre o que você já contou a ela.</p>
+        </div>
+      </div>
+
+      <div class="composer-wrapper">
+        <div id="media-menu" class="media-menu" hidden>
+          <button type="button" id="action-take-photo">📷 Tirar foto agora</button>
+          <button type="button" id="action-record-video">🎥 Gravar vídeo agora</button>
+          <button type="button" id="action-record-audio">🎙️ Gravar áudio agora</button>
+          <button type="button" id="action-attach-file">📎 Anexar arquivo</button>
+        </div>
+
+        <form id="composer-form" class="composer">
+          <button type="button" id="media-menu-toggle" class="btn btn-secondary btn-icon" aria-label="Anexar mídia" aria-haspopup="true">
+            +
+          </button>
+          <textarea
+            id="composer-input"
+            rows="1"
+            placeholder="Escreva algo para registrar ou pergunte à sua secretária…"
+            aria-label="Mensagem"
+          ></textarea>
+          <button type="submit" class="btn btn-primary btn-icon" aria-label="Enviar">➤</button>
+        </form>
+
+        <input type="file" id="file-input" accept="audio/*,image/*,video/*" hidden />
+      </div>
+    </section>
+
+    <!-- ===================== ABA: HISTÓRICO ===================== -->
+    <section id="view-history" class="view">
+      <div class="history-toolbar">
+        <button type="button" class="filter-chip active" data-filter="todos">Todos</button>
+        <button type="button" class="filter-chip" data-filter="texto">Texto</button>
+        <button type="button" class="filter-chip" data-filter="audio">Áudio</button>
+        <button type="button" class="filter-chip" data-filter="foto">Foto</button>
+        <button type="button" class="filter-chip" data-filter="video">Vídeo</button>
+      </div>
+      <div class="history-scroll">
+        <div id="history-list"></div>
+        <div id="history-empty-state" class="empty-state" style="display:none;">
+          <div class="seal-badge" aria-hidden="true">S</div>
+          <p><strong>Nenhum registro ainda.</strong></p>
+          <p>Tudo que você registrar no chat aparecerá aqui, organizado por tipo.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== NAVEGAÇÃO INFERIOR ===================== -->
+    <nav class="tab-bar" aria-label="Navegação principal">
+      <button type="button" class="active" data-view="chat">
+        <span aria-hidden="true">💬</span> Conversar
+      </button>
+      <button type="button" data-view="history">
+        <span aria-hidden="true">🗂️</span> Histórico
+      </button>
+    </nav>
+  </div>
+
+  <script type="module" src="src/js/app.js"></script>
+  <script type="module" src="src/js/chat.js"></script>
+  <script type="module" src="src/js/history.js"></script>
+  <script src="src/js/sw-register.js"></script>
+</body>
+</html>

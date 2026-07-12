@@ -1,0 +1,24 @@
+# Segredos — NUNCA commitar
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Node (se algum tooling de frontend for adicionado no futuro)
+node_modules/
+
+# Sistema operacional / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log

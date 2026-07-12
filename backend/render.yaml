@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: secretaria-particular-api
+    env: python
+    plan: free
+    region: oregon
+    buildCommand: "apt-get update && apt-get install -y ffmpeg && pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: TOTP_ENCRYPTION_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
