@@ -137,29 +137,35 @@ async function registerTextMemory(text) {
   }
 }
 
+// --- Lógica do Botão de Modo (Consultar vs Gravar) ---
+let isRecordingMode = false;
+const modeToggle = document.getElementById("mode-toggle");
+
+modeToggle.addEventListener("click", () => {
+  isRecordingMode = !isRecordingMode;
+  modeToggle.textContent = isRecordingMode ? "💾" : "🔍";
+  modeToggle.title = isRecordingMode ? "Modo: Gravar" : "Modo: Consultar";
+  textInput.placeholder = isRecordingMode ? "Escreva o que deseja guardar..." : "Pergunte à sua secretária...";
+  textInput.focus();
+});
+
+// --- Novo Envio Inteligente ---
 composerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const value = textInput.value.trim();
   if (!value) return;
+
   textInput.value = "";
   textInput.style.height = "auto";
 
-  const textLower = value.toLowerCase();
+  if (isRecordingMode) {
+    await registerTextMemory(value);
 
-  // Heurística de intenção: Se usar comandos ou palavras-chave, nós guardamos na base de dados!
-  if (textLower.startsWith("/guardar") ||
-    textLower.startsWith("/gravar") ||
-    textLower.startsWith("lembre-se que") ||
-    textLower.startsWith("anote que")) {
-
-    // Remove a palavra de comando para guardar apenas a informação útil
-    let textToSave = value.replace(/^\/(guardar|gravar)\s*/i, "");
-    textToSave = textToSave.replace(/^(lembre-se que|anote que)\s*/i, "");
-
-    // Chama a nova função que vai efetivamente salvar a memória
-    await registerTextMemory(textToSave);
+    // Opcional: Volta automaticamente para o modo de consulta após gravar
+    isRecordingMode = false;
+    modeToggle.textContent = "🔍";
+    textInput.placeholder = "Pergunte à sua secretária...";
   } else {
-    // Caso contrário, trata a frase como uma pergunta/consulta normal
     await sendQuestion(value);
   }
 });
