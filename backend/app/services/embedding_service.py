@@ -6,7 +6,7 @@ from fastapi import HTTPException
 MODEL_ID = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 # --- A CORREÇÃO: Nova URL do Router da Hugging Face ---
-API_URL = f"https://router.huggingface.co/hf-inference/models/{MODEL_ID}"
+API_URL = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{MODEL_ID}"
 
 def embed_text(texto: str) -> list[float]:
     # Pega o token que vamos configurar no Render
